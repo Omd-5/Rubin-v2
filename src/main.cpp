@@ -1,13 +1,8 @@
 #include <Arduino.h>
 #include <ESP32Servo.h>
-
-
-//Big Doors 
-#define LbigS1pin 12
-#define LbigS2pin 11
-
-#define RbigS1pin 12
-#define RbigS2pin 11
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <Myconfig.h>
 
 Servo lsb1, lsb2;
 Servo rsb1, rsb2;
@@ -17,6 +12,13 @@ Servo RbigS1, RbigS2;
 //Small
 Servo Rsmall;
 Servo Lsmall;
+
+
+TwoWire Wi = TwoWire(0);
+
+#define SCREEN_ADDRESS 0x3D ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
+Adafruit_SSD1306 display(128, 64, &Wi, -1);
+
 
 
 void LDoor(int dgree){
@@ -33,9 +35,35 @@ void RDoor(int dgree){
     }
 }
 
+void Lbig(bool state){
+  if (state){
+    LDoor(maxBL);
+  }else{
+    LDoor(minBL);
+  }
+
+}
+
+
+void Rbig(bool state){
+  if (state){
+    RDoor(maxBR);
+  }else{
+    RDoor(minBR);
+  }
+
+}
+
+
+
+
 void setup(){
+  Wi.begin(4, 15);
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C); 
   lsb1.attach(LbigS1pin);
   lsb2.attach(LbigS2pin);
+  rsb1.attach(RbigS1pin);
+  rsb2.attach(RbigS2pin);
   Serial.begin(115200);
 }
 
@@ -48,7 +76,3 @@ void loop(){
   
 
 }
-
-
-
-  
