@@ -1,187 +1,253 @@
-#include <Arduino.h>
+#include <Arduino.h> // Arduino Core for ESP32
 // #include <ESP32Servo.h>
-// #include <Servo.h>
-// #include <Adafruit_GFX.h>
-// #include <Adafruit_SSD1306.h>
-// #include <FreeRTOS.h>
-// #include <Wire.h>
-// #include <RCWL_1X05.h>
+#include <Servo.h> // Servo Library
+#include <SoftwareSerial.h>
+#include <Myconfig.h>
+#include <FreeRTOS_AVR.h>
+#include <NewPing.h>
+#include <hundle.h>
+
+SoftwareSerial PlasticSensorPort(pspR, pspT); // RX, TX
 
 
+//Big Doors Servos
+Servo lsb1, lsb2;
+Servo rsb1, rsb2;
 
 
-// // #Project Files
-// // #include <hundle.h>
-// #include <Myconfig.h>
+//Small Doors Servos
+Servo Rsmall;
+Servo Lsmall;
+Servo fsb;
 
 
-// // RCWL_1X05 sensor;
-
-// //Big Doors Servos
-// Servo lsb1, lsb2;
-// Servo rsb1, rsb2;
-
-
-// //Small Doors Servos
-// Servo Rsmall;
-// Servo Lsmall;
-
-
-// // TwoWire Wi = TwoWire(0);
-
-// // #define SCREEN_ADDRESS 0x3D ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
-// // Adafruit_SSD1306 display(128, 64, &Wi, -1);
-
-
-// // #include <ESP32Servo.h>
-// #include <Arduino.h>
-// #include <Myconfig.h>
-
-
-
-// //Big Doors Functions
-// void LDoor(int dgree){
+//Big Doors Functions
+void LDoor(int dgree){
   
-//     if (dgree < 181){
-//       lsb1.write(dgree);
-//       lsb2.write(180 - dgree);
-//     }
-//   // lsb1.detach();
-//   // lsb2.detach();
-// }
-
-
-// void RDoor(int dgree){
-//   // int dgree = );
-
-//     if (dgree < 181){
-//       rsb1.write(dgree);
-//       rsb2.write(180 - dgree);
-//     }
-//   // rsb1.detach();
-//   // rsb2.detach();
-// }
+    if (dgree < 181){
+      lsb1.write(dgree);
+      lsb2.write(180 - dgree);
+    }
+}
 
 
 
-// //##################################
+void RDoor(int dgree){
+  // int dgree = );
 
-// //Small Doors Functions
-// void Lbig(bool state){
-//   if (state){
-//     LDoor(maxBL);
-//   }else{
-//     LDoor(minBL);
-//   }
-// }
+    if (dgree < 181){
+      rsb1.write(dgree);
+      rsb2.write(180 - dgree);
+    }
+}
 
 
-// void Rbig(bool state){
+//##################################
 
-//   if (state){
-//     RDoor(maxBR);
-//   }else{
-//     RDoor(minBR);
-//   }
-
-// }
-
-// //##################################
-
-// const int pingPin = 20;
-// int inPin = 21;
+//Small Doors Functions
+void LbigOpen(bool state){
+  if (state){
+    LDoor(maxBL);
+  }else{
+    LDoor(minBL);
+  }
+}
 
 
-// long microsecondsToCentimeters(long microseconds)
-// {
-//   return microseconds / 29 / 2;
-// }
+void RbigOpen(bool state){
+
+  if (state){
+    RDoor(maxBR);
+  }else{
+    RDoor(minBR);
+  }
+
+}
+
+
+void LsmallOpen(bool state){
+  if (state){
+    Lsmall.write(maxSL);
+  }else{
+    Lsmall.write(minSL);
+  }
+}
+
+void RsmallOpen(bool state){
+  if (state){
+    Rsmall.write(maxSR);
+  }else{
+    Rsmall.write(minSR);
+  }
+}
 
 
 
+// TaskHandle_t frontDoor = NULL;
 
-// void setup(){
-//   // Wire.begin();
+void frontDoor(void *pvParameters){
+  NewPing sonar(trig1, echo1, 200); // NewPing setup of pins and maximum distance.
   
-//   // sensor.setFilter(true); // filter is turned off by default
-//   // sensor.setTimeout(50); // 100 ms is recommended, but lower values might work
-//   // sensor.setMode(RCWL_1X05::continuous); 
-//   // Wi.begin(4, 15)1060;
-//   // display.begin(SSD1306_SWITCHCAPVCC, 0x3C); 
-//   // rsb1.attach(RsmallPin);
-//   // lsb1.attach(LsmallPin);
-//   rsb1.attach(RbigS1pin);
-//   rsb2.attach(RbigS2pin);
-//   lsb1.attach(LbigS1pin);
-//   lsb2.attach(LbigS2pin);
-
-//   Serial.begin(9600);
-// }
-
-// void loop(){
-//   long duration, cm;
-//   pinMode(pingPin, OUTPUT);
-//   digitalWrite(pingPin, LOW);
-//   delayMicroseconds(2);
-//   digitalWrite(pingPin, HIGH);
-//   delayMicroseconds(5);
-//   digitalWrite(pingPin, LOW);
-//   pinMode(pingPin, INPUT);
-//   duration = pulseIn(pingPin, HIGH);
-//   cm = microsecondsToCentimeters(duration);
-//   Serial.print(cm);
-//   Serial.print("cm");
-//   // if (sensor.update()) {
-//   //   Serial.print(sensor.read()); Serial.println(" mm");
+  for(;;){
+    int distance = sonar.ping_cm();
+  if (distance < 10) { // If the distance is less than 10cm, open the door
+    fsb.write(maxF);
+    vTaskResume(checkElemntP1H);
+    vTaskDelay(10000); // Wait for 100ms before taking another measurement
+  } else { // Else, close the door
+    fsb.write(minF);
+  }
   
-//   if(Serial.available()){
-//     Serial.print(cm);
-//     Serial.print("cm");
-//   }
-//   for (int i = 0; i < 180; i += 100)
-//   {
-//     LDoor(i);
-//     delay(10);
-//     RDoor(i + 30);
-//     delay(10);
-//   }
-// }
+  }
+}
+
+
+
+TaskHandle_t checkElemntP1H = NULL;
+
+void checkElemntP1(void *pvParameters){
+  NewPing sonar(trig2, echo2, 200); 
+  for(;;){
+    int distance = sonar.ping_cm();
+  if (distance < checkElementDistance ) { // If the distance is less than 10cm, open the door
+    if (digitalRead(metal) == LOW){
+      LbigOpen(true);
+      vTaskDelay(1500); // Wait for 100ms before taking another measurement
+      LbigOpen(false);
+    }else{
+      RbigOpen(true);
+      vTaskDelay(1500); // Wait for 100ms before taking another measurement
+      RbigOpen(false);
+    }
+    
+  }
+  }
+}
+
+void PlasticSensor(){
+ String SRead = PlasticSensorPort.read();
+  int A1 = getValue(inputString, ',', 0);
+  int A2 = getValue(inputString, ',', 1);
+  int A3 = getValue(inputString, ',', 2);
+  int A4 = getValue(inputString, ',', 3);
+  
+  upThen(A1, plSens);
+  upThen(A2, plSens);
+  upThen(A3, plSens);
+  upThen(A4, plSens);
+}
 
 
 
 
 
 
-// void setup(){
-//   Serial.begin(115200);
-//   pinMode(18, INPUT);
-//   pinMode(33, INPUT);
-//   pinmode(35, INPUT);
+//##################################
 
-//   }
-
-// void loop(){
-//   Serial.println( analogRead(18));
-
-// }
 
 
 void setup(){
+  //..Set Serials
+  PlasticSensorPort.begin(9600);
   Serial.begin(9600);
-  pinMode(A3, INPUT);
-  pinMode(A2, INPUT);
-  pinMode(A1, INPUT);
-  pinMode(A0, INPUT);
+
+  //..Set Pins
+  pinMode(metal, INPUT);
+  
+
+  //..Attach Servos
+  rsb1.attach(RbigS1pin);
+  rsb2.attach(RbigS2pin);
+  lsb1.attach(LbigS1pin);
+  lsb2.attach(LbigS2pin);
+  Rsmall.attach(RsmallPin);
+  Lsmall.attach(LsmallPin);
+
+  //..Set Servos to default position
+  LDoor(minBL);
+  RDoor(minBR);
+  LsmallOpen(false);
+  RsmallOpen(false);
+
+  //..Set Serial
+  Serial.begin(9600);
+  Serial.println("Start...");
+  delay(1000);
+  Serial.println("Rubbin V2.0");
+
+//FreeRTOS Tasks
+  xTaskCreate(
+    frontDoor,          /* Task function. */
+    "frontDoor",        /* String with name of task. */
+    10000,              /* Stack size in bytes. */
+    NULL,               /* Parameter passed as input of the task */
+    1,                  /* Priority of the task. */
+    NULL);              /* Task handle. */
+  
+  xTaskCreate(
+    checkElemntP1,          /* Task function. */
+    "checkElemntP1",        /* String with name of task. */
+    10000,              /* Stack size in bytes. */
+    NULL,               /* Parameter passed as input of the task */
+    1,                  /* Priority of the task. */
+    checkElemntP1H);              /* Task handle. */
+}
+
+if (checkElemntP1H != NULL){
+  vTaskSuspend(checkElemntP1H);
 }
 
 void loop(){
-  Serial.print("A0: ");
-  Serial.print(analogRead(A0));
-  Serial.print(" A1: ");
-  Serial.print(analogRead(A1));
-  Serial.print(" A2: ");
-  Serial.print(analogRead(A2));
-  Serial.print(" A3: ");
-  Serial.println(analogRead(A3));
-  delay(500);
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//===========Test
+//##################################
+// void loop(){
+  
+//     //..Read Serial
+//     if (Serial.available() > 0){
+//       String data = Serial.readString();
+//       Serial.println(data);
+//       if (data == "LbigOpen"){
+//         LbigOpen(true);
+//       }else if (data == "LbigClose"){
+//         LbigOpen(false);
+//       }else if (data == "RbigOpen"){
+//         RbigOpen(true);
+//       }else if (data == "RbigClose"){
+//         RbigOpen(false);
+//       }else if (data == "LsmallOpen"){
+//         LsmallOpen(true);
+//       }else if (data == "LsmallClose"){
+//         LsmallOpen(false);
+//       }else if (data == "RsmallOpen"){
+//         RsmallOpen(true);
+//       }else if (data == "RsmallClose"){
+//         RsmallOpen(false);
+//       }
+//     }
+// }
